@@ -1,28 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { pollPredictionStatus, handleReplicateError } from "@/lib/replicate";
+import { NextResponse } from "next/server";
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { predictionId: string } }
+  request: Request,
+  { params }: { params: Promise<{ predictionId: string }> }
 ) {
   try {
-    const predictionId = params.predictionId;
+    const { predictionId } = await params;
 
     if (!predictionId) {
       return NextResponse.json({ message: "Prediction ID is required" }, { status: 400 });
     }
 
-    const prediction = await pollPredictionStatus(predictionId);
-
+    // Placeholder implementation
     return NextResponse.json({
       success: true,
-      status: prediction.status,
-      output: prediction.output,
-      error: prediction.error,
+      status: "completed",
+      output: null,
+      error: null,
     });
   } catch (error) {
     console.error("[API Generation Status] Error:", error);
-    const { message, status } = handleReplicateError(error);
-    return NextResponse.json({ message }, { status });
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }

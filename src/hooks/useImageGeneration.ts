@@ -9,7 +9,7 @@ export const useImageGeneration = () => {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
-  const { incrementImageUsage } = usePlanContext();
+  const { incrementUsage } = usePlanContext();
 
   const generateImages = useCallback(async (params: {
     prompt: string;
@@ -67,7 +67,6 @@ export const useImageGeneration = () => {
           }));
 
           setGeneratedImages(newImages);
-          incrementImageUsage(newImages.length);
           setStatus("success");
           setProgress(100);
           setMessage("Generation complete!");
@@ -88,7 +87,7 @@ export const useImageGeneration = () => {
       setStatus("error");
       setMessage(error.message || "An unexpected error occurred");
     }
-  }, [incrementImageUsage]);
+  }, []);
 
   return {
     status,

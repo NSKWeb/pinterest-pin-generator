@@ -4,6 +4,10 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import type { ImagePrompt, PinIdea, GeneratedImage } from "@/types";
 import { useImageGeneration } from "@/hooks/useImageGeneration";
+import { usePlanContext } from "@/hooks/usePlanContext";
+import { LimitReachedModal } from "./LimitReachedModal";
+import { WatchAdPrompt } from "./WatchAdPrompt";
+import { WatchAdModal } from "./ads/WatchAdModal";
 import GenerationOptions from "./GenerationOptions";
 import GenerationStatus from "./GenerationStatus";
 import ImageGrid from "./ImageGrid";
@@ -15,15 +19,20 @@ type PromptsListProps = {
   idea: PinIdea | null;
   prompts: ImagePrompt[];
   onCopy: (value: string) => void;
+  canGenerate?: boolean;
 };
 
-export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
+export const PromptsList = ({ idea, prompts, onCopy, canGenerate = true }: PromptsListProps) => {
+  const { selectedPlan, usage, canGenerate: checkCanGenerate, incrementUsage, incrementAdsWatched } = usePlanContext();
   const [activePromptId, setActivePromptId] = useState<string | null>(prompts[0]?.id ?? null);
   const [quality, setQuality] = useState<"fast" | "best">("fast");
   const [variations, setVariations] = useState<1 | 2 | 3>(1);
   const [aspectRatio, setAspectRatio] = useState<"1000x1500" | "square" | "vertical">("1000x1500");
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [allGeneratedImages, setAllGeneratedImages] = useState<Record<string, GeneratedImage[]>>({});
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isWatchAdModalOpen, setIsWatchAdModalOpen] = useState(false);
+  const [isWatchAdPromptOpen, setIsWatchAdPromptOpen] = useState(false);
 
   const { status, progress, message, generatedImages, generateImages } = useImageGeneration();
 
@@ -31,7 +40,6 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
     setActivePromptId(prompts[0]?.id ?? null);
   }, [prompts]);
 
-  // Load images from DB on mount or when active prompt changes
   useEffect(() => {
     const loadImages = async () => {
       const storedImages = await getImagesFromDB();
@@ -63,7 +71,6 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
         [activePromptId]: [...(prev[activePromptId] || []), ...newImages],
       }));
 
-      // Save to IndexedDB
       newImages.forEach((img) => {
         saveImageToDB({
           id: img.id,
@@ -71,14 +78,16 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
           promptId: activePromptId,
           imageUrl: img.url,
           generatedAt: img.generatedAt,
-          prompt: activePrompt.main_prompt,
+          prompt: activePrompt?.main_prompt || "",
           generationTime: img.generationTime,
           pinTitle: idea?.title || "",
           aspectRatio: img.aspectRatio,
         });
       });
+
+      incrementUsage("image", newImages.length);
     }
-  }, [status, generatedImages, activePromptId, idea, activePrompt]);
+  }, [status, generatedImages, activePromptId, idea]);
 
   if (!idea || !prompts.length) {
     return null;
@@ -87,6 +96,16 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
   const activePrompt = prompts.find((prompt) => prompt.id === activePromptId) ?? prompts[0];
 
   const handleGenerate = async () => {
+    const check = checkCanGenerate("image", variations);
+    if (!check.allowed) {
+      if (selectedPlan === "PlanC" && check.canWatchAd) {
+        setIsWatchAdPromptOpen(true);
+      } else {
+        setIsLimitModalOpen(true);
+      }
+      return;
+    }
+
     if (!activePrompt) return;
     await generateImages({
       prompt: activePrompt.main_prompt,
@@ -98,12 +117,23 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
     });
   };
 
+  const handleAdUnlock = (count: number) => {
+    incrementAdsWatched(count);
+    setIsWatchAdModalOpen(false);
+    setIsWatchAdPromptOpen(false);
+  };
+
+  const handleDownload = async (image: GeneratedImage) => {
+    const filename = `pin-${idea.title.toLowerCase().replace(/\s+/g, "-")}-${activePromptId?.slice(-4)}.png`;
+    await downloadImage(image.url, filename);
+  };
+
   const handleDownloadAll = async () => {
     const imagesToDownload = currentPromptImages.map((img, index) => ({
       url: img.url,
       filename: `pin-${idea.title.toLowerCase().replace(/\s+/g, "-")}-${activePromptId?.slice(-4)}-${index + 1}.png`,
     }));
-    
+
     for (const img of imagesToDownload) {
       await downloadImage(img.url, img.filename);
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -124,6 +154,18 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
     }
   };
 
+  const handleDeleteImage = async (imageId: string) => {
+    await deleteImageFromDB(imageId);
+    setAllGeneratedImages((prev) => ({
+      ...prev,
+      [activePromptId || ""]: (prev[activePromptId || ""] || []).filter((img) => img.id !== imageId),
+    }));
+  };
+
+  const currentPromptImages = allGeneratedImages[activePromptId ?? ""] ?? [];
+
+  const isGenerateDisabled = !canGenerate || status === "loading";
+
   return (
     <div className="mt-8 rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-xl">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -142,7 +184,7 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
             key={prompt.id}
             type="button"
             className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${
-              prompt.id === activePrompt.id
+              prompt.id === activePrompt?.id
                 ? "border-primary bg-primary/20 text-white"
                 : "border-white/10 text-white/60 hover:border-primary/60"
             }`}
@@ -206,14 +248,10 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
             setAspectRatio={setAspectRatio}
             onGenerate={handleGenerate}
             isLoading={status === "loading"}
+            disabled={isGenerateDisabled}
           />
-          
-          <GenerationStatus
-            status={status}
-            progress={progress}
-            message={message}
-            onRetry={handleGenerate}
-          />
+
+          <GenerationStatus status={status} progress={progress} message={message} onRetry={handleGenerate} />
         </div>
 
         <div className="space-y-6">
@@ -221,15 +259,12 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
             <h3 className="text-lg font-semibold text-white">Generated Pins</h3>
             {currentPromptImages.length > 0 && (
               <div className="flex gap-2">
-                <button
-                  onClick={handleClearHistory}
-                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                >
+                <button onClick={handleClearHistory} className="text-xs text-red-400 transition-colors hover:text-red-300">
                   Clear history
                 </button>
                 <button
                   onClick={handleDownloadAll}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                  className="text-xs text-indigo-400 transition-colors hover:text-indigo-300"
                 >
                   Download all
                 </button>
@@ -254,6 +289,31 @@ export const PromptsList = ({ idea, prompts, onCopy }: PromptsListProps) => {
         onDownload={handleDownload}
         onNavigate={(index) => setSelectedImage(currentPromptImages[index])}
       />
+
+      <LimitReachedModal
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+        type="image"
+        plan={selectedPlan}
+        usage={usage}
+        onWatchAd={selectedPlan === "PlanC" ? () => setIsWatchAdModalOpen(true) : undefined}
+      />
+
+      <WatchAdModal
+        isOpen={isWatchAdModalOpen}
+        onClose={() => setIsWatchAdModalOpen(false)}
+        onUnlock={handleAdUnlock}
+      />
+
+      {isWatchAdPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <WatchAdPrompt
+            isOpen={isWatchAdPromptOpen}
+            onClose={() => setIsWatchAdPromptOpen(false)}
+            onWatchAd={() => setIsWatchAdModalOpen(true)}
+          />
+        </div>
+      )}
     </div>
   );
 };

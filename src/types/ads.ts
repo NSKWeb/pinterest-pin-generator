@@ -1,4 +1,6 @@
-import type { PlanType } from "@/lib/config";
+import type { PlanType as ConfigPlanType } from "@/lib/config";
+
+export type PlanType = ConfigPlanType;
 
 export type AdNetwork = "adsense" | "viads";
 

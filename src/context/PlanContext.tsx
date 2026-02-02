@@ -9,7 +9,8 @@ export type PlanContextValue = {
   selectedPlan: PlanType | null;
   usage: UsageState;
   selectPlan: (plan: PlanType) => void;
-  incrementUsage: (count?: number) => void;
+  incrementIdeaUsage: (count?: number) => void;
+  incrementPromptUsage: (count?: number) => void;
   resetUsage: () => void;
 };
 
@@ -17,7 +18,8 @@ export const PlanContext = createContext<PlanContextValue | undefined>(undefined
 
 const defaultUsage: UsageState = {
   plan: null,
-  used: 0,
+  ideasUsed: 0,
+  promptsUsed: 0,
   limit: null,
   lastReset: null,
 };
@@ -30,19 +32,23 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const storedPlan = safeStorage.get<PlanType | null>(STORAGE_KEYS.plan, null);
-    const storedUsage = safeStorage.get<UsageState>(STORAGE_KEYS.usage, defaultUsage);
+    const storedUsage = safeStorage.get<UsageState & { used?: number }>(STORAGE_KEYS.usage, defaultUsage);
     const storedReset = safeStorage.get<string | null>(STORAGE_KEYS.lastReset, null);
     const resetKey = getResetKey();
     const shouldReset = storedReset !== resetKey;
     const initialPlan = storedPlan;
-    const initialUsed = shouldReset ? 0 : storedUsage.used;
+    const initialIdeasUsed = shouldReset
+      ? 0
+      : (storedUsage.ideasUsed ?? storedUsage.used ?? 0);
+    const initialPromptsUsed = shouldReset ? 0 : (storedUsage.promptsUsed ?? 0);
     const initialLimit = initialPlan ? PLAN_CONFIG[initialPlan].limit : null;
 
     setSelectedPlan(initialPlan);
     setUsage({
       ...storedUsage,
       plan: initialPlan,
-      used: initialUsed,
+      ideasUsed: initialIdeasUsed,
+      promptsUsed: initialPromptsUsed,
       limit: initialLimit,
       lastReset: resetKey,
     });
@@ -70,7 +76,8 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
     const limit = PLAN_CONFIG[plan].limit;
     const updatedUsage: UsageState = {
       plan,
-      used: 0,
+      ideasUsed: 0,
+      promptsUsed: 0,
       limit,
       lastReset: resetKey,
     };
@@ -78,21 +85,33 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
     setUsage(updatedUsage);
   }, []);
 
-  const incrementUsage = useCallback((count = 1) => {
+  const incrementIdeaUsage = useCallback((count = 1) => {
     setUsage((prev) => {
       if (prev.plan === null) {
         return prev;
       }
-      const newUsed = prev.used + count;
+      const newUsed = prev.ideasUsed + count;
       if (prev.limit !== null && newUsed > prev.limit) {
         return {
           ...prev,
-          used: prev.limit,
+          ideasUsed: prev.limit,
         };
       }
       return {
         ...prev,
-        used: newUsed,
+        ideasUsed: newUsed,
+      };
+    });
+  }, []);
+
+  const incrementPromptUsage = useCallback((count = 1) => {
+    setUsage((prev) => {
+      if (prev.plan === null) {
+        return prev;
+      }
+      return {
+        ...prev,
+        promptsUsed: prev.promptsUsed + count,
       };
     });
   }, []);
@@ -100,7 +119,8 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
   const resetUsage = useCallback(() => {
     setUsage((prev) => ({
       ...prev,
-      used: 0,
+      ideasUsed: 0,
+      promptsUsed: 0,
       lastReset: getResetKey(),
     }));
   }, []);
@@ -110,10 +130,11 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
       selectedPlan,
       usage,
       selectPlan,
-      incrementUsage,
+      incrementIdeaUsage,
+      incrementPromptUsage,
       resetUsage,
     }),
-    [selectedPlan, usage, selectPlan, incrementUsage, resetUsage],
+    [selectedPlan, usage, selectPlan, incrementIdeaUsage, incrementPromptUsage, resetUsage],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;

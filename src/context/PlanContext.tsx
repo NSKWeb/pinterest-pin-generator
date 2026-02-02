@@ -34,25 +34,36 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
     const storedReset = safeStorage.get<string | null>(STORAGE_KEYS.lastReset, null);
     const resetKey = getResetKey();
     const shouldReset = storedReset !== resetKey;
+    const initialPlan = storedPlan;
+    const initialUsed = shouldReset ? 0 : storedUsage.used;
+    const initialLimit = initialPlan ? PLAN_CONFIG[initialPlan].limit : null;
 
-    setSelectedPlan(storedPlan);
+    setSelectedPlan(initialPlan);
     setUsage({
       ...storedUsage,
-      plan: storedPlan,
-      used: shouldReset ? 0 : storedUsage.used,
-      limit: storedPlan ? PLAN_CONFIG[storedPlan].limit : null,
+      plan: initialPlan,
+      used: initialUsed,
+      limit: initialLimit,
       lastReset: resetKey,
     });
   }, []);
 
   useEffect(() => {
-    if (!selectedPlan) {
-      return;
-    }
     safeStorage.set(STORAGE_KEYS.plan, selectedPlan);
     safeStorage.set(STORAGE_KEYS.usage, usage);
     safeStorage.set(STORAGE_KEYS.lastReset, usage.lastReset);
   }, [selectedPlan, usage]);
+
+  useEffect(() => {
+    if (!selectedPlan) {
+      return;
+    }
+    setUsage((prev) => ({
+      ...prev,
+      plan: selectedPlan,
+      limit: PLAN_CONFIG[selectedPlan].limit,
+    }));
+  }, [selectedPlan]);
 
   const selectPlan = useCallback((plan: PlanType) => {
     const resetKey = getResetKey();
@@ -73,6 +84,12 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
         return prev;
       }
       const newUsed = prev.used + count;
+      if (prev.limit !== null && newUsed > prev.limit) {
+        return {
+          ...prev,
+          used: prev.limit,
+        };
+      }
       return {
         ...prev,
         used: newUsed,

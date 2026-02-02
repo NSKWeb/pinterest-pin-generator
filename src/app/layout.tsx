@@ -3,6 +3,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { APP_NAME } from "@/lib/config";
 import { PlanProvider } from "@/context/PlanContext";
+import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <PlanProvider>{children}</PlanProvider>
+        <PlanProvider>
+          <AppShell>{children}</AppShell>
+        </PlanProvider>
       </body>
     </html>
   );

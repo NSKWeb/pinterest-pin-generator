@@ -37,7 +37,11 @@ export const Header = ({ onOpenPlanSelector }: HeaderProps) => {
           <select
             className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white focus:border-primary focus:outline-none"
             value={selectedPlan ?? ""}
-            onChange={(event) => selectPlan(event.target.value as PlanType)}
+            onChange={(event) => {
+              if (event.target.value) {
+                selectPlan(event.target.value as PlanType);
+              }
+            }}
           >
             <option value="" disabled>
               Choose plan

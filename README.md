@@ -64,6 +64,22 @@ import { PlanSelector } from "@/components/PlanSelector";
 <PlanSelector isOpen onClose={() => {}} />
 ```
 
+### Usage Bar
+
+```tsx
+import { UsageBar } from "@/components/UsageBar";
+
+<UsageBar plan="PlanB" used={3} limit={5} resetLabel="in 4h 20m" />
+```
+
+### Pin Form
+
+```tsx
+import { PinForm } from "@/components/PinForm";
+
+<PinForm />
+```
+
 ## Configuration
 
 Environment variables are stored in `.env.local` for local development. Update values as needed.

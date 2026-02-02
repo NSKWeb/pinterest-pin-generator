@@ -4,7 +4,23 @@ export const STORAGE_KEYS = {
   plan: "pinspark_plan",
   usage: "pinspark_usage",
   lastReset: "pinspark_last_reset",
+  ideas: "pinspark_ideas",
+  prompts: "pinspark_prompts",
+  selectedIdea: "pinspark_selected_idea",
 };
+
+export const PIN_NICHES = [
+  "Gardening",
+  "Cooking & Food",
+  "Fitness & Health",
+  "Home & DIY",
+  "Beauty & Fashion",
+  "Self-Development",
+] as const;
+
+export const IDEA_OPTIONS = [3, 5, 10] as const;
+
+export const PROMPT_VARIATIONS = [1, 2, 3] as const;
 
 export type PlanType = "PlanA" | "PlanB" | "PlanC";
 

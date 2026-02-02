@@ -5,7 +5,8 @@ import { PLAN_CONFIG, PlanType } from "@/lib/config";
 
 export type UsageBarProps = {
   plan: PlanType | null;
-  used: number;
+  ideasUsed: number;
+  promptsUsed: number;
   limit: number | null;
   resetLabel: string;
 };
@@ -16,7 +17,7 @@ const planColors: Record<PlanType, string> = {
   PlanC: "from-indigo-500 to-purple-500",
 };
 
-export const UsageBar = ({ plan, used, limit, resetLabel }: UsageBarProps) => {
+export const UsageBar = ({ plan, ideasUsed, promptsUsed, limit, resetLabel }: UsageBarProps) => {
   const progress = useMemo(() => {
     if (limit === null) {
       return 100;
@@ -24,8 +25,8 @@ export const UsageBar = ({ plan, used, limit, resetLabel }: UsageBarProps) => {
     if (limit === 0) {
       return 0;
     }
-    return Math.min((used / limit) * 100, 100);
-  }, [limit, used]);
+    return Math.min((ideasUsed / limit) * 100, 100);
+  }, [ideasUsed, limit]);
 
   if (!plan) {
     return null;
@@ -39,8 +40,9 @@ export const UsageBar = ({ plan, used, limit, resetLabel }: UsageBarProps) => {
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-white/50">{planLabel}</p>
           <p className="text-sm text-white/90">
-            {limit === null ? "Unlimited" : `${used}/${limit}`} ideas used
+            {limit === null ? "Unlimited" : `${ideasUsed}/${limit}`} ideas used
           </p>
+          <p className="text-xs text-white/60">Prompts generated: {promptsUsed}</p>
         </div>
         <span className="text-xs text-white/60">Resets {resetLabel}</span>
       </div>

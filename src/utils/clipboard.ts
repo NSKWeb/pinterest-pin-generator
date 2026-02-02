@@ -1,0 +1,13 @@
+export const copyToClipboard = async (text: string) => {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.error("Clipboard copy failed", error);
+    return false;
+  }
+};

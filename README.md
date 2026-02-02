@@ -84,6 +84,13 @@ import { PinForm } from "@/components/PinForm";
 
 Environment variables are stored in `.env.local` for local development. Update values as needed.
 
+Required Replicate variables:
+
+```
+NEXT_PUBLIC_REPLICATE_API_KEY=your_replicate_api_key
+REPLICATE_API_TOKEN=your_replicate_api_token
+```
+
 ## Scripts
 
 - `npm run dev` - start local dev server

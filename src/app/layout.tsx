@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { APP_NAME } from "@/lib/config";
 import { PlanProvider } from "@/context/PlanContext";
 import { AppShell } from "@/components/AppShell";
+import { AdInitializer } from "@/components/ads/AdInitializer";
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -15,7 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <PlanProvider>
-          <AppShell>{children}</AppShell>
+          <AdInitializer>
+            <AppShell>{children}</AppShell>
+          </AdInitializer>
         </PlanProvider>
       </body>
     </html>

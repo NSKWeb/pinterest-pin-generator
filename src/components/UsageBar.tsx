@@ -7,6 +7,7 @@ export type UsageBarProps = {
   plan: PlanType | null;
   ideasUsed: number;
   promptsUsed: number;
+  imagesUsed: number;
   limit: number | null;
   resetLabel: string;
 };
@@ -17,7 +18,7 @@ const planColors: Record<PlanType, string> = {
   PlanC: "from-indigo-500 to-purple-500",
 };
 
-export const UsageBar = ({ plan, ideasUsed, promptsUsed, limit, resetLabel }: UsageBarProps) => {
+export const UsageBar = ({ plan, ideasUsed, promptsUsed, imagesUsed, limit, resetLabel }: UsageBarProps) => {
   const progress = useMemo(() => {
     if (limit === null) {
       return 100;
@@ -25,6 +26,7 @@ export const UsageBar = ({ plan, ideasUsed, promptsUsed, limit, resetLabel }: Us
     if (limit === 0) {
       return 0;
     }
+    // Track total usage vs limit if combined, or just ideas for now
     return Math.min((ideasUsed / limit) * 100, 100);
   }, [ideasUsed, limit]);
 
@@ -42,7 +44,10 @@ export const UsageBar = ({ plan, ideasUsed, promptsUsed, limit, resetLabel }: Us
           <p className="text-sm text-white/90">
             {limit === null ? "Unlimited" : `${ideasUsed}/${limit}`} ideas used
           </p>
-          <p className="text-xs text-white/60">Prompts generated: {promptsUsed}</p>
+          <div className="mt-1 flex gap-4">
+            <p className="text-xs text-white/60">Prompts: {promptsUsed}</p>
+            <p className="text-xs text-white/60">Images: {imagesUsed}</p>
+          </div>
         </div>
         <span className="text-xs text-white/60">Resets {resetLabel}</span>
       </div>

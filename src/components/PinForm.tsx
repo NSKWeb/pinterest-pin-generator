@@ -344,6 +344,7 @@ export const PinForm = () => {
           plan={selectedPlan}
           ideasUsed={usage.ideasUsed}
           promptsUsed={usage.promptsUsed}
+          imagesUsed={usage.imagesUsed}
           limit={usage.limit}
           resetLabel={resetLabel}
         />

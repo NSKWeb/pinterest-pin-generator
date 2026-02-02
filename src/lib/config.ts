@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   lastReset: "pinspark_last_reset",
   ideas: "pinspark_ideas",
   prompts: "pinspark_prompts",
+  images: "pinspark_images",
   selectedIdea: "pinspark_selected_idea",
 };
 

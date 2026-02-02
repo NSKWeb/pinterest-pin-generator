@@ -199,8 +199,67 @@ export const generatePromptsWithLlama = async (idea: { title: string; descriptio
 
   const prediction = await createPrediction(userPrompt, systemPrompt);
   const output = await pollPrediction(prediction);
-  const normalized = normalizeOutput(output);
+  const normalized = normalizeOutput(output as string | string[]);
   return parsePromptResponse(normalized);
+};
+
+export const generateImagesWithStableDiffusion = async (options: {
+  prompt: string;
+  negative_prompt: string;
+  num_outputs: number;
+  num_inference_steps: number;
+  aspect_ratio?: string;
+}) => {
+  const { token } = initializeReplicate();
+  const model = "stability-ai/sdxl:39e7aeb850bab7167ff89e7b127287e6532cb099378987541eaa0f431a0b69c4";
+  
+  const [width, height] = options.aspect_ratio === "square" ? [1024, 1024] : [768, 1152]; // SDXL likes these
+
+  const response = await fetchWithTimeout(`${REPLICATE_API_URL}/predictions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      version: "39e7aeb850bab7167ff89e7b127287e6532cb099378987541eaa0f431a0b69c4",
+      input: {
+        prompt: options.prompt,
+        negative_prompt: options.negative_prompt,
+        num_outputs: options.num_outputs,
+        num_inference_steps: options.num_inference_steps,
+        guidance_scale: 7.5,
+        scheduler: "K_EULER",
+        width: width,
+        height: height,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new ReplicateError(errorText || "Replicate API error.", response.status);
+  }
+
+  const prediction = (await response.json()) as ReplicatePrediction;
+  return prediction;
+};
+
+export const pollPredictionStatus = async (predictionId: string) => {
+  const { token } = initializeReplicate();
+  const response = await fetchWithTimeout(`${REPLICATE_API_URL}/predictions/${predictionId}`, {
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new ReplicateError(errorText || "Replicate API error.", response.status);
+  }
+
+  return (await response.json()) as ReplicatePrediction;
 };
 
 export const handleReplicateError = (error: unknown) => {

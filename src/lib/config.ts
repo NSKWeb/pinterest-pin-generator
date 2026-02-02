@@ -8,6 +8,8 @@ export const STORAGE_KEYS = {
   prompts: "pinspark_prompts",
   images: "pinspark_images",
   selectedIdea: "pinspark_selected_idea",
+  adEvents: "pinspark_ad_events",
+  adUnlock: "pinspark_ad_unlock",
 };
 
 export const PIN_NICHES = [

@@ -8,6 +8,7 @@ import { PromptsList } from "@/components/PromptsList";
 import { Spinner } from "@/components/Spinner";
 import { StatusToast } from "@/components/StatusToast";
 import { UsageBar } from "@/components/UsageBar";
+import { WatchAdModal } from "@/components/ads";
 import { usePlanContext } from "@/hooks/usePlanContext";
 import { useToast } from "@/hooks/useToast";
 import { IDEA_OPTIONS, PIN_NICHES, PROMPT_VARIATIONS, STORAGE_KEYS } from "@/lib/config";
@@ -52,6 +53,7 @@ export const PinForm = () => {
   const [estimatedTime, setEstimatedTime] = useState(30);
   const [lastAction, setLastAction] = useState<"ideas" | "prompts" | null>(null);
   const [lastIdea, setLastIdea] = useState<PinIdea | null>(null);
+  const [isWatchAdModalOpen, setIsWatchAdModalOpen] = useState(false);
 
   useEffect(() => {
     if (usage.limit === null) {
@@ -228,6 +230,15 @@ export const PinForm = () => {
     showToast("Request canceled.", "error");
   };
 
+  const handleWatchAd = () => {
+    setIsWatchAdModalOpen(true);
+  };
+
+  const handleAdUnlock = (count: number) => {
+    showToast(`+${count} extra generations unlocked!`, "success");
+    // The usage will be automatically adjusted when the limit is checked
+  };
+
   const activePrompts = promptsByIdea[selectedIdeaId ?? ""] ?? [];
 
   const isDisabled =
@@ -347,6 +358,7 @@ export const PinForm = () => {
           imagesUsed={usage.imagesUsed}
           limit={usage.limit}
           resetLabel={resetLabel}
+          onWatchAd={handleWatchAd}
         />
       </div>
 
@@ -366,6 +378,12 @@ export const PinForm = () => {
       ) : null}
 
       <PromptsList idea={selectedIdea} prompts={activePrompts} onCopy={handleCopy} />
+
+      <WatchAdModal
+        isOpen={isWatchAdModalOpen}
+        onClose={() => setIsWatchAdModalOpen(false)}
+        onUnlock={handleAdUnlock}
+      />
     </div>
   );
 };

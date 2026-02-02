@@ -1,6 +1,6 @@
 # Pinterest Pin Generator
 
-A production-ready Next.js 15 starter for a Pinterest pin generator with plan selection, usage tracking UI, and a reusable component library.
+A production-ready Next.js 15 starter for a Pinterest pin generator with plan selection, usage tracking UI, ad network integration, and a reusable component library.
 
 ## Getting Started
 
@@ -69,7 +69,38 @@ import { PlanSelector } from "@/components/PlanSelector";
 ```tsx
 import { UsageBar } from "@/components/UsageBar";
 
-<UsageBar plan="PlanB" used={3} limit={5} resetLabel="in 4h 20m" />
+<UsageBar
+  plan="PlanB"
+  ideasUsed={3}
+  promptsUsed={2}
+  imagesUsed={1}
+  limit={5}
+  resetLabel="in 4h 20m"
+  onWatchAd={() => console.log("Watch ad")}
+/>
+```
+
+### Ad Components
+
+```tsx
+import { AdBannerHeader, WatchAdModal, AdInterstitial } from "@/components/ads";
+
+// Header banner (auto-displayed in Header)
+<AdBannerHeader />
+
+// Watch ad modal (for Plan C users)
+<WatchAdModal
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  onUnlock={(count) => console.log(`Unlocked ${count} generations`)}
+/>
+
+// Interstitial ad (for Plan A)
+<AdInterstitial
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  autoCloseAfter={10}
+/>
 ```
 
 ### Pin Form
@@ -82,13 +113,40 @@ import { PinForm } from "@/components/PinForm";
 
 ## Configuration
 
-Environment variables are stored in `.env.local` for local development. Update values as needed.
+Environment variables are stored in `.env.local` for local development. See `.env.local.example` for a complete template.
 
-Required Replicate variables:
+### Replicate API
+
+Required for image generation:
 
 ```
 NEXT_PUBLIC_REPLICATE_API_KEY=your_replicate_api_key
 REPLICATE_API_TOKEN=your_replicate_api_token
+```
+
+### Ad Networks (Optional)
+
+The app integrates with Google AdSense and Viads for monetization. See [AD_INTEGRATION.md](AD_INTEGRATION.md) for detailed setup instructions.
+
+**Google AdSense:**
+```
+NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=ca-pub-xxxxxxxxx
+NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID=1234567890
+NEXT_PUBLIC_ADSENSE_RESPONSIVE_SLOT_ID=0987654321
+NEXT_PUBLIC_ENABLE_ADSENSE=true
+```
+
+**Viads:**
+```
+NEXT_PUBLIC_VIADS_PUBLISHER_ID=your_viads_publisher_id
+NEXT_PUBLIC_VIADS_VIDEO_PLACEMENT_ID=placement_video_id
+NEXT_PUBLIC_VIADS_INTERSTITIAL_PLACEMENT_ID=placement_interstitial_id
+NEXT_PUBLIC_ENABLE_VIADS=true
+```
+
+**Debug Mode:**
+```
+NEXT_PUBLIC_AD_DEBUG_MODE=false
 ```
 
 ## Scripts

@@ -78,3 +78,17 @@ export interface StoredImage {
   pinTitle: string;
   aspectRatio: string;
 }
+
+// Re-export ad types
+export type {
+  AdNetwork,
+  AdType,
+  AdFrequency,
+  AdEventType,
+  AdPlacement,
+  AdEvent,
+  AdStats,
+  AdSettings,
+  AdConfig,
+  AdUnlockState,
+} from "./ads";

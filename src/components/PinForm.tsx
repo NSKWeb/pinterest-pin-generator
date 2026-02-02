@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Spinner } from "@/components/Spinner";
@@ -18,19 +18,35 @@ const nicheOptions = [
 
 const ideaOptions = [3, 5, 10];
 
+const getResetCountdown = () => {
+  const now = new Date();
+  const nextReset = new Date(now);
+  nextReset.setHours(24, 0, 0, 0);
+  const diff = Math.max(nextReset.getTime() - now.getTime(), 0);
+  const hours = Math.floor(diff / 3_600_000);
+  const minutes = Math.floor((diff % 3_600_000) / 60_000);
+  return `in ${hours}h ${minutes}m`;
+};
+
 export const PinForm = () => {
   const { selectedPlan, usage, incrementUsage } = usePlanContext();
   const [topic, setTopic] = useState("");
   const [niche, setNiche] = useState(nicheOptions[0]);
   const [ideas, setIdeas] = useState(ideaOptions[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetLabel, setResetLabel] = useState("daily");
 
-  const remainingLabel = useMemo(() => {
-    if (!usage.lastReset) {
-      return "daily";
+  useEffect(() => {
+    if (usage.limit === null) {
+      setResetLabel("No reset needed");
+      return;
     }
-    return "daily";
-  }, [usage.lastReset]);
+
+    const updateLabel = () => setResetLabel(getResetCountdown());
+    updateLabel();
+    const interval = setInterval(updateLabel, 60_000);
+    return () => clearInterval(interval);
+  }, [usage.limit]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -102,12 +118,7 @@ export const PinForm = () => {
       </form>
 
       <div className="mt-6">
-        <UsageBar
-          plan={selectedPlan}
-          used={usage.used}
-          limit={usage.limit}
-          resetLabel={remainingLabel}
-        />
+        <UsageBar plan={selectedPlan} used={usage.used} limit={usage.limit} resetLabel={resetLabel} />
       </div>
 
       <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-white/60">

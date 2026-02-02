@@ -11,6 +11,7 @@ export type PlanContextValue = {
   selectPlan: (plan: PlanType) => void;
   incrementIdeaUsage: (count?: number) => void;
   incrementPromptUsage: (count?: number) => void;
+  incrementImageUsage: (count?: number) => void;
   resetUsage: () => void;
 };
 
@@ -20,6 +21,7 @@ const defaultUsage: UsageState = {
   plan: null,
   ideasUsed: 0,
   promptsUsed: 0,
+  imagesUsed: 0,
   limit: null,
   lastReset: null,
 };
@@ -41,6 +43,7 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
       ? 0
       : (storedUsage.ideasUsed ?? storedUsage.used ?? 0);
     const initialPromptsUsed = shouldReset ? 0 : (storedUsage.promptsUsed ?? 0);
+    const initialImagesUsed = shouldReset ? 0 : (storedUsage.imagesUsed ?? 0);
     const initialLimit = initialPlan ? PLAN_CONFIG[initialPlan].limit : null;
 
     setSelectedPlan(initialPlan);
@@ -49,6 +52,7 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
       plan: initialPlan,
       ideasUsed: initialIdeasUsed,
       promptsUsed: initialPromptsUsed,
+      imagesUsed: initialImagesUsed,
       limit: initialLimit,
       lastReset: resetKey,
     });
@@ -78,6 +82,7 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
       plan,
       ideasUsed: 0,
       promptsUsed: 0,
+      imagesUsed: 0,
       limit,
       lastReset: resetKey,
     };
@@ -116,11 +121,24 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, []);
 
+  const incrementImageUsage = useCallback((count = 1) => {
+    setUsage((prev) => {
+      if (prev.plan === null) {
+        return prev;
+      }
+      return {
+        ...prev,
+        imagesUsed: prev.imagesUsed + count,
+      };
+    });
+  }, []);
+
   const resetUsage = useCallback(() => {
     setUsage((prev) => ({
       ...prev,
       ideasUsed: 0,
       promptsUsed: 0,
+      imagesUsed: 0,
       lastReset: getResetKey(),
     }));
   }, []);
@@ -132,9 +150,10 @@ export const PlanProvider = ({ children }: { children: React.ReactNode }) => {
       selectPlan,
       incrementIdeaUsage,
       incrementPromptUsage,
+      incrementImageUsage,
       resetUsage,
     }),
-    [selectedPlan, usage, selectPlan, incrementIdeaUsage, incrementPromptUsage, resetUsage],
+    [selectedPlan, usage, selectPlan, incrementIdeaUsage, incrementPromptUsage, incrementImageUsage, resetUsage],
   );
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;

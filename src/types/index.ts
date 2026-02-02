@@ -4,6 +4,7 @@ export type UsageState = {
   plan: PlanType | null;
   ideasUsed: number;
   promptsUsed: number;
+  imagesUsed: number;
   limit: number | null;
   lastReset: string | null;
 };
@@ -44,3 +45,36 @@ export type PromptResponse = {
   prompts: ImagePrompt[];
   variationCount: number;
 };
+
+export type GeneratedImage = {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+  aspectRatio: string;
+  generatedAt: string;
+  seed: number;
+  generationTime: number;
+  model: string;
+};
+
+export type ImageGenerationResponse = {
+  success: boolean;
+  generatedAt: string;
+  promptId: string;
+  images: GeneratedImage[];
+  totalGenerationTime: number;
+  variationCount: number;
+};
+
+export interface StoredImage {
+  id: string;
+  ideaId: string;
+  promptId: string;
+  imageUrl: string;
+  generatedAt: string;
+  prompt: string;
+  generationTime: number;
+  pinTitle: string;
+  aspectRatio: string;
+}

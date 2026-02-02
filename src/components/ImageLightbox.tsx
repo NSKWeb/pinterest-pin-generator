@@ -2,7 +2,7 @@
 
 import React from "react";
 import { GeneratedImage } from "@/types";
-import Modal from "./Modal";
+import { Modal } from "./Modal";
 
 interface ImageLightboxProps {
   image: GeneratedImage | null;
@@ -36,7 +36,7 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({
   };
 
   return (
-    <Modal isOpen={!!image} onClose={onClose} title="Image Preview" maxWidth="4xl">
+    <Modal isOpen={!!image} onClose={onClose} title="Image Preview">
       <div className="relative group">
         <div className="aspect-[2/3] max-h-[70vh] w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
           <img

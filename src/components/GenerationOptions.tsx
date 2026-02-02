@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Button from "./Button";
+import { Button } from "./Button";
 
 interface GenerationOptionsProps {
   quality: "fast" | "best";
@@ -89,8 +89,7 @@ const GenerationOptions: React.FC<GenerationOptionsProps> = ({
 
       <Button
         onClick={onGenerate}
-        isLoading={isLoading}
-        disabled={disabled}
+        disabled={disabled || isLoading}
         className="w-full"
       >
         {isLoading ? "Generating..." : "Generate Images"}

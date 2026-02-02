@@ -1,9 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { APP_NAME, PLAN_CONFIG, PlanType } from "@/lib/config";
 import { Button } from "@/components/Button";
+import { UsageBar } from "@/components/UsageBar";
+import { UsageBreakdown } from "@/components/UsageBreakdown";
+import { Modal } from "@/components/Modal";
 import { usePlanContext } from "@/hooks/usePlanContext";
+import { useLimitCheck } from "@/hooks/useLimitCheck";
 import { AdBannerHeader } from "@/components/ads";
 
 type HeaderProps = {
@@ -16,7 +20,12 @@ const planOptions: { value: PlanType; label: string }[] = Object.values(PLAN_CON
 }));
 
 export const Header = ({ onOpenPlanSelector }: HeaderProps) => {
-  const { selectedPlan, selectPlan } = usePlanContext();
+  const { selectedPlan, usage, selectPlan } = usePlanContext();
+  const { isAtLimit, getRemainingMessage } = useLimitCheck(usage, selectedPlan);
+  const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
+
+  const isIdeasAtLimit = isAtLimit("idea");
+  const remainingMessage = getRemainingMessage("idea");
 
   return (
     <header className="w-full border-b border-white/10 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900">
@@ -33,9 +42,25 @@ export const Header = ({ onOpenPlanSelector }: HeaderProps) => {
           </div>
 
           <div className="flex flex-1 flex-wrap items-center justify-center gap-3">
-            <div className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+            <div
+              className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${
+                isIdeasAtLimit
+                  ? "border-red-500/30 bg-red-500/10 text-red-400"
+                  : "border-white/15 bg-white/5 text-white/70"
+              }`}
+            >
               {selectedPlan ? PLAN_CONFIG[selectedPlan].name : "Select a plan"}
             </div>
+
+            {selectedPlan && (
+              <button
+                onClick={() => setIsUsageModalOpen(true)}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10"
+              >
+                {remainingMessage}
+              </button>
+            )}
+
             <select
               className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2 text-sm text-white focus:border-primary focus:outline-none"
               value={selectedPlan ?? ""}
@@ -60,8 +85,21 @@ export const Header = ({ onOpenPlanSelector }: HeaderProps) => {
           </div>
         </div>
 
+        {selectedPlan && (
+          <div className="w-full">
+            <UsageBar plan={selectedPlan} usage={usage} compact />
+          </div>
+        )}
+
         <AdBannerHeader />
       </div>
+
+      <Modal isOpen={isUsageModalOpen} onClose={() => setIsUsageModalOpen(false)}>
+        <div className="max-h-[80vh] overflow-y-auto">
+          <h2 className="mb-4 text-xl font-semibold text-white">Usage Summary</h2>
+          <UsageBreakdown usage={usage} plan={selectedPlan} showLifetime />
+        </div>
+      </Modal>
     </header>
   );
 };

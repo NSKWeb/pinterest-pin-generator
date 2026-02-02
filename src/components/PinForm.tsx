@@ -8,23 +8,16 @@ import { PromptsList } from "@/components/PromptsList";
 import { Spinner } from "@/components/Spinner";
 import { StatusToast } from "@/components/StatusToast";
 import { UsageBar } from "@/components/UsageBar";
+import { LimitReachedModal } from "@/components/LimitReachedModal";
 import { WatchAdModal } from "@/components/ads";
+import { PlanUpgradePrompt } from "@/components/PlanUpgradePrompt";
 import { usePlanContext } from "@/hooks/usePlanContext";
 import { useToast } from "@/hooks/useToast";
+import { useLimitCheck } from "@/hooks/useLimitCheck";
 import { IDEA_OPTIONS, PIN_NICHES, PROMPT_VARIATIONS, STORAGE_KEYS } from "@/lib/config";
 import { copyToClipboard } from "@/utils/clipboard";
 import { safeStorage } from "@/utils/storage";
 import type { ImagePrompt, IdeaResponse, PinIdea, PromptResponse } from "@/types";
-
-const getResetCountdown = () => {
-  const now = new Date();
-  const nextReset = new Date(now);
-  nextReset.setHours(24, 0, 0, 0);
-  const diff = Math.max(nextReset.getTime() - now.getTime(), 0);
-  const hours = Math.floor(diff / 3_600_000);
-  const minutes = Math.floor((diff % 3_600_000) / 60_000);
-  return `in ${hours}h ${minutes}m`;
-};
 
 const createIdeaMap = (entries: [string, ImagePrompt[]][]) => {
   return entries.reduce<Record<string, ImagePrompt[]>>((acc, [key, value]) => {
@@ -34,14 +27,24 @@ const createIdeaMap = (entries: [string, ImagePrompt[]][]) => {
 };
 
 export const PinForm = () => {
-  const { selectedPlan, usage, incrementIdeaUsage, incrementPromptUsage } = usePlanContext();
+  const {
+    selectedPlan,
+    usage,
+    incrementUsage,
+    incrementAdsWatched,
+    canGenerate,
+    getRemainingMessage,
+    getLimitReachedMessage,
+    switchPlan,
+  } = usePlanContext();
   const { toast, showToast, clearToast } = useToast();
+  const { isAtLimit } = useLimitCheck(usage, selectedPlan);
+
   const [topic, setTopic] = useState("");
   const [niche, setNiche] = useState<(typeof PIN_NICHES)[number]>(PIN_NICHES[0]);
   const [ideasCount, setIdeasCount] = useState<(typeof IDEA_OPTIONS)[number]>(IDEA_OPTIONS[0]);
   const [isLoadingIdeas, setIsLoadingIdeas] = useState(false);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
-  const [resetLabel, setResetLabel] = useState("daily");
   const [error, setError] = useState<string | null>(null);
   const [ideas, setIdeas] = useState<PinIdea[]>(() => safeStorage.get(STORAGE_KEYS.ideas, []));
   const [promptsByIdea, setPromptsByIdea] = useState<Record<string, ImagePrompt[]>>(() =>
@@ -54,18 +57,9 @@ export const PinForm = () => {
   const [lastAction, setLastAction] = useState<"ideas" | "prompts" | null>(null);
   const [lastIdea, setLastIdea] = useState<PinIdea | null>(null);
   const [isWatchAdModalOpen, setIsWatchAdModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (usage.limit === null) {
-      setResetLabel("No reset needed");
-      return;
-    }
-
-    const updateLabel = () => setResetLabel(getResetCountdown());
-    updateLabel();
-    const interval = setInterval(updateLabel, 60_000);
-    return () => clearInterval(interval);
-  }, [usage.limit]);
+  const [isLimitReachedModalOpen, setIsLimitReachedModalOpen] = useState(false);
+  const [isUpgradePromptOpen, setIsUpgradePromptOpen] = useState(false);
+  const [limitType, setLimitType] = useState<"idea" | "prompt" | "image">("idea");
 
   useEffect(() => {
     safeStorage.set(STORAGE_KEYS.ideas, ideas);
@@ -92,14 +86,19 @@ export const PinForm = () => {
     return () => clearInterval(interval);
   }, [isLoadingIdeas, isLoadingPrompts]);
 
-  const isOverLimit = useMemo(() => {
-    if (usage.limit === null) {
-      return false;
-    }
-    return usage.ideasUsed + ideasCount > usage.limit;
-  }, [ideasCount, usage.ideasUsed, usage.limit]);
+  const canGenerateIdeas = useMemo(() => {
+    const check = canGenerate("idea", ideasCount);
+    return check.allowed;
+  }, [canGenerate, ideasCount]);
 
-  const selectedIdea = useMemo(() => ideas.find((idea) => idea.id === selectedIdeaId) ?? null, [ideas, selectedIdeaId]);
+  const canGeneratePrompts = useMemo(() => {
+    return canGenerate("prompt", 1).allowed;
+  }, [canGenerate]);
+
+  const selectedIdea = useMemo(
+    () => ideas.find((idea) => idea.id === selectedIdeaId) ?? null,
+    [ideas, selectedIdeaId],
+  );
 
   const handleCopy = async (value: string) => {
     const success = await copyToClipboard(value);
@@ -108,6 +107,11 @@ export const PinForm = () => {
     } else {
       showToast("Unable to copy to clipboard.", "error");
     }
+  };
+
+  const showLimitReached = (type: "idea" | "prompt" | "image") => {
+    setLimitType(type);
+    setIsLimitReachedModalOpen(true);
   };
 
   const handleGenerateIdeas = async () => {
@@ -121,9 +125,12 @@ export const PinForm = () => {
       return;
     }
 
-    if (isOverLimit) {
-      setError("Daily limit reached. Upgrade to Plan A for unlimited.");
-      showToast("Daily limit reached. Upgrade to Plan A for unlimited.", "error");
+    const check = canGenerate("idea", ideasCount);
+    if (!check.allowed) {
+      const message = getLimitReachedMessage("idea");
+      setError(message);
+      showToast("Daily limit reached", "error");
+      showLimitReached("idea");
       return;
     }
 
@@ -155,7 +162,7 @@ export const PinForm = () => {
       setIdeas(data.ideas);
       setPromptsByIdea({});
       setSelectedIdeaId(data.ideas[0]?.id ?? null);
-      incrementIdeaUsage(data.ideas.length);
+      incrementUsage("idea", data.ideas.length);
       showToast(`${data.ideas.length} ideas generated successfully!`, "success");
     } catch (fetchError) {
       const message = fetchError instanceof Error ? fetchError.message : "Network error. Please try again.";
@@ -168,6 +175,15 @@ export const PinForm = () => {
 
   const handleGeneratePrompts = async (idea: PinIdea) => {
     if (isLoadingPrompts) {
+      return;
+    }
+
+    const check = canGenerate("prompt", 1);
+    if (!check.allowed) {
+      const message = getLimitReachedMessage("prompt");
+      setError(message);
+      showToast("Daily prompt limit reached", "error");
+      showLimitReached("prompt");
       return;
     }
 
@@ -201,7 +217,7 @@ export const PinForm = () => {
         ...prev,
         [idea.id]: data.prompts,
       }));
-      incrementPromptUsage(data.prompts.length);
+      incrementUsage("prompt", data.prompts.length);
       showToast(`${data.prompts.length} prompts generated!`, "success");
     } catch (fetchError) {
       const message = fetchError instanceof Error ? fetchError.message : "Network error. Please try again.";
@@ -231,12 +247,24 @@ export const PinForm = () => {
   };
 
   const handleWatchAd = () => {
+    setIsLimitReachedModalOpen(false);
     setIsWatchAdModalOpen(true);
   };
 
   const handleAdUnlock = (count: number) => {
+    incrementAdsWatched(count);
     showToast(`+${count} extra generations unlocked!`, "success");
-    // The usage will be automatically adjusted when the limit is checked
+  };
+
+  const handleUpgrade = () => {
+    setIsLimitReachedModalOpen(false);
+    setIsUpgradePromptOpen(true);
+  };
+
+  const handleSwitchToPlanA = () => {
+    switchPlan("PlanA");
+    setIsUpgradePromptOpen(false);
+    showToast("Switched to Plan A - Unlimited!", "success");
   };
 
   const activePrompts = promptsByIdea[selectedIdeaId ?? ""] ?? [];
@@ -246,8 +274,10 @@ export const PinForm = () => {
     isLoadingIdeas ||
     isLoadingPrompts ||
     topic.trim().length === 0 ||
-    isOverLimit ||
+    !canGenerateIdeas ||
     !process.env.NEXT_PUBLIC_REPLICATE_API_KEY;
+
+  const showLimitWarning = selectedPlan && !canGenerateIdeas && !isLoadingIdeas;
 
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-xl">
@@ -256,11 +286,13 @@ export const PinForm = () => {
           Missing Replicate configuration. Add your API key to continue.
         </div>
       ) : null}
-      {isOverLimit ? (
+
+      {showLimitWarning && (
         <div className="mb-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-          Daily limit reached. Upgrade to Plan A for unlimited.
+          {getLimitReachedMessage("idea")}
         </div>
-      ) : null}
+      )}
+
       <form
         className="grid gap-5"
         onSubmit={(event) => {
@@ -295,21 +327,26 @@ export const PinForm = () => {
         <label className="flex flex-col gap-2 text-sm text-white/80">
           <span className="text-sm font-medium text-white/90">Number of Ideas</span>
           <div className="flex flex-wrap gap-3">
-            {IDEA_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setIdeasCount(option)}
-                className={`rounded-full border px-4 py-2 text-sm transition ${
-                  ideasCount === option
-                    ? "border-primary bg-primary/20 text-white"
-                    : "border-white/10 text-white/60 hover:border-primary/60"
-                }`}
-                disabled={isLoadingIdeas || isLoadingPrompts}
-              >
-                {option} Ideas
-              </button>
-            ))}
+            {IDEA_OPTIONS.map((option) => {
+              const canSelect = canGenerate("idea", option).allowed;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setIdeasCount(option)}
+                  className={`rounded-full border px-4 py-2 text-sm transition ${
+                    ideasCount === option
+                      ? "border-primary bg-primary/20 text-white"
+                      : canSelect
+                        ? "border-white/10 text-white/60 hover:border-primary/60"
+                        : "cursor-not-allowed border-white/5 text-white/30"
+                  }`}
+                  disabled={isLoadingIdeas || isLoadingPrompts || !canSelect}
+                >
+                  {option} Ideas
+                </button>
+              );
+            })}
           </div>
         </label>
         <Button type="submit" disabled={isDisabled} className="w-full">
@@ -353,12 +390,10 @@ export const PinForm = () => {
       <div className="mt-6">
         <UsageBar
           plan={selectedPlan}
-          ideasUsed={usage.ideasUsed}
-          promptsUsed={usage.promptsUsed}
-          imagesUsed={usage.imagesUsed}
-          limit={usage.limit}
-          resetLabel={resetLabel}
-          onWatchAd={handleWatchAd}
+          usage={usage}
+          onWatchAd={() => setIsWatchAdModalOpen(true)}
+          onUpgrade={handleUpgrade}
+          showDetails
         />
       </div>
 
@@ -377,13 +412,39 @@ export const PinForm = () => {
         </div>
       ) : null}
 
-      <PromptsList idea={selectedIdea} prompts={activePrompts} onCopy={handleCopy} />
+      <PromptsList
+        idea={selectedIdea}
+        prompts={activePrompts}
+        onCopy={handleCopy}
+        canGenerate={canGeneratePrompts}
+      />
 
       <WatchAdModal
         isOpen={isWatchAdModalOpen}
         onClose={() => setIsWatchAdModalOpen(false)}
         onUnlock={handleAdUnlock}
       />
+
+      <LimitReachedModal
+        isOpen={isLimitReachedModalOpen}
+        onClose={() => setIsLimitReachedModalOpen(false)}
+        type={limitType}
+        plan={selectedPlan}
+        usage={usage}
+        onWatchAd={selectedPlan === "PlanC" ? handleWatchAd : undefined}
+        onUpgrade={selectedPlan === "PlanB" ? handleUpgrade : undefined}
+      />
+
+      {isUpgradePromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <PlanUpgradePrompt
+            isOpen={isUpgradePromptOpen}
+            onClose={() => setIsUpgradePromptOpen(false)}
+            onUpgrade={handleSwitchToPlanA}
+            currentPlan={selectedPlan}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -92,3 +92,17 @@ export type {
   AdConfig,
   AdUnlockState,
 } from "./ads";
+
+// Re-export usage types
+export type {
+  DailyUsage,
+  LifetimeStats,
+  UsageStats,
+  GenerationType,
+  LimitCheckResult,
+  PlanLimits,
+  TimeRemaining,
+  UsageEvent,
+  LimitReachedEvent,
+  AnalyticsData,
+} from "./usage";

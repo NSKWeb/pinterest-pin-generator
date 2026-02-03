@@ -1,7 +1,65 @@
+# Dependencies
 node_modules
-.next
-out
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
 dist
-.env.local
+build
+.next
+*.tsbuildinfo
+next-env.d.ts
+
+# Production
+/build
+/.vercel
+.vercel
+
+# Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local files
 .DS_Store
+*.pem
+*.log
+
+# Editor directories and files
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Sentry
+.sentryclirc
+sentry.properties
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+test.txt

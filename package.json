@@ -1,12 +1,35 @@
 {
   "name": "pinterest-pin-generator",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Production-ready Pinterest pin generator with AI-powered idea and image generation",
   "private": true,
+  "author": "NSKWeb",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NSKWeb/pinterest-pin-generator"
+  },
+  "keywords": [
+    "pinterest",
+    "pin-generator",
+    "ai",
+    "image-generation",
+    "nextjs",
+    "react",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "echo '✅ Dependencies installed successfully'",
+    "prebuild": "echo '🔨 Building production bundle...'",
+    "postbuild": "echo '✅ Build completed successfully'"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",

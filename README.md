@@ -2,6 +2,11 @@
 
 A production-ready Next.js 15 Pinterest pin generator with complete UI framework, plan selection system, and usage tracking. Built with TypeScript, Tailwind CSS 4, and React 19.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/NSKWeb/pinterest-pin-generator)
+
+**🌐 Live Demo:** Coming Soon
+**📚 Documentation:** [Deployment Guide](./DEPLOYMENT.md)
+
 ## ✨ Features
 
 - **🎯 Plan Selection System**: Three-tier plan system (Unlimited, Limited Free, Watch & Unlock)
@@ -15,12 +20,33 @@ A production-ready Next.js 15 Pinterest pin generator with complete UI framework
 
 ## 🚀 Getting Started
 
+### Local Development
+
 ```bash
+# Install dependencies
 npm install
+
+# Copy environment variables
+cp .env.local.example .env.local
+
+# Start development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/NSKWeb/pinterest-pin-generator)
+
+**Quick Steps:**
+1. Click the "Deploy" button above
+2. Connect your GitHub account
+3. Add environment variables (see [Deployment Guide](./DEPLOYMENT.md))
+4. Click "Deploy"
+5. Your app is live! 🎉
+
+**Detailed Instructions:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
 
 ## 📁 Project Structure
 
@@ -239,6 +265,67 @@ The application is ready for:
 - **Google AdSense** - Ad monetization
 - **Viads** - Video ad network
 
+## 🚢 Deployment
+
+### Production Ready Features
+
+✅ **Optimized Next.js Configuration**
+- Image optimization on Edge
+- Security headers configured
+- Compression enabled
+- Console logs removed in production
+
+✅ **Vercel Deployment**
+- One-click deploy button
+- Automatic HTTPS/SSL
+- Global CDN
+- Serverless functions (60s timeout)
+- Auto-scaling
+
+✅ **Environment Variables**
+- Production-ready `.env.local.example`
+- All API keys configurable
+- Feature flags for ads
+- Separate dev/prod configs
+
+✅ **Performance Optimized**
+- Core Web Vitals optimized
+- Image lazy loading
+- Code splitting
+- Bundle size optimized
+- Cache headers configured
+
+✅ **Monitoring Ready**
+- Vercel Analytics integration
+- Error tracking setup (Sentry optional)
+- Real-time logs
+- Performance metrics
+
+### Quick Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/NSKWeb/pinterest-pin-generator)
+
+**See [DEPLOYMENT.md](./DEPLOYMENT.md) for:**
+- Step-by-step deployment guide
+- Environment variables setup
+- Custom domain configuration
+- Performance optimization
+- Monitoring & analytics
+- Troubleshooting guide
+- Scaling considerations
+
+### Post-Deployment
+
+After deploying:
+1. ✅ Add all environment variables in Vercel dashboard
+2. ✅ Test all features on live site
+3. ✅ Enable Vercel Analytics
+4. ✅ Monitor Core Web Vitals
+5. ✅ Setup custom domain (optional)
+6. ✅ Configure error tracking (optional)
+
 ---
 
 Built with ❤️ using Next.js 15 and modern web technologies.
+
+**Ready for Production Deployment! 🚀**

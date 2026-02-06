@@ -1,19 +1,22 @@
 {
-  "name": "pinterest-pin-generator",
+  "name": "multitool",
   "version": "1.0.0",
-  "description": "Production-ready Pinterest pin generator with AI-powered idea and image generation",
+  "description": "Comprehensive multi-tool website with 8 calculators and generators",
   "private": true,
   "author": "NSKWeb",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/NSKWeb/pinterest-pin-generator"
+    "url": "https://github.com/NSKWeb/multitool"
   },
   "keywords": [
-    "pinterest",
-    "pin-generator",
-    "ai",
-    "image-generation",
+    "calculators",
+    "generators",
+    "tools",
+    "asphalt-calculator",
+    "speed-calculator",
+    "fitness",
+    "education",
     "nextjs",
     "react",
     "typescript"

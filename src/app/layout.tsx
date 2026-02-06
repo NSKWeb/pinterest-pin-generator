@@ -1,25 +1,32 @@
 import "./globals.css";
 import React from "react";
 import type { Metadata } from "next";
-import { APP_NAME } from "@/lib/config";
-import { PlanProvider } from "@/context/PlanContext";
-import { AppShell } from "@/components/AppShell";
-import { AdInitializer } from "@/components/ads/AdInitializer";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { MainHeader } from "@/components/MainHeader";
+import { MainFooter } from "@/components/MainFooter";
+import { generateWebsiteSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: "Pinterest Pin Generator",
+  title: "MultiTool - Free Online Calculators & Generators",
+  description: "Your comprehensive online resource for free calculators, estimators, and generators. Get accurate results instantly with our easy-to-use tools.",
+  keywords: ["calculators", "generators", "tools", "asphalt calculator", "speed calculator", "name generator"],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(generateWebsiteSchema()) }}
+        />
+      </head>
       <body>
-        <PlanProvider>
-          <AdInitializer>
-            <AppShell>{children}</AppShell>
-          </AdInitializer>
-        </PlanProvider>
+        <ThemeProvider>
+          <MainHeader />
+          <main className="min-h-screen">{children}</main>
+          <MainFooter />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -3,18 +3,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Sidebar } from '@/components/dashboard/Sidebar';
 import { DashboardHeader } from '@/components/dashboard/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { 
-  ChefHat, 
-  FileText, 
-  Image, 
-  Zap, 
-  TrendingUp, 
+import {
+  ChefHat,
+  FileText,
+  Image,
+  Zap,
+  TrendingUp,
   Calendar,
   Clock,
-  Database
+  Database,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -136,17 +135,14 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-950">
-        <Sidebar />
-        <div className="ml-64">
-          <div className="h-16 bg-gray-900/50 border-b border-gray-800" />
-          <div className="p-6">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-800 rounded w-1/4" />
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-24 bg-gray-800 rounded-xl" />
-                ))}
-              </div>
+        <div className="h-16 bg-gray-900/50 border-b border-gray-800" />
+        <div className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-800 rounded w-1/4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-24 bg-gray-800 rounded-xl" />
+              ))}
             </div>
           </div>
         </div>
@@ -310,5 +306,5 @@ export default function DashboardPage() {
   );
 }
 
-import { Sidebar } from '@/components/dashboard/Sidebar';
+
 import { StatCard } from '@/components/dashboard/StatCard';

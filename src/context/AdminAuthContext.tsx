@@ -3,6 +3,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { getNextRequiredLayer } from '@/lib/auth/three-layer';
 import type { ThreeLayerAuthState, AuthLayer, AuthResponse } from '@/types/auth';
 
 interface AdminAuthContextType {
@@ -47,6 +48,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(authState.sessionToken ? { Authorization: `Bearer ${authState.sessionToken}` } : {}),
         },
         body: JSON.stringify(credentials),
       });
@@ -60,7 +62,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
       // Update auth state based on layer
       setAuthState(prev => {
-        const newState = { ...prev };
+        const newState = { ...prev, sessionToken: data.token ?? prev.sessionToken };
 
         switch (layer) {
           case 'layer1':
@@ -74,7 +76,6 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
           case 'layer3':
             newState.layer3Verified = true;
             newState.isAuthenticated = true;
-            newState.sessionToken = data.token;
             break;
         }
 
@@ -158,8 +159,14 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
 
         if (data.success && data.session) {
+          const nextLayer = getNextRequiredLayer(
+            data.session.layer1,
+            data.session.layer2,
+            data.session.layer3
+          ) || 'layer3';
+
           setAuthState({
-            currentLayer: 'layer3',
+            currentLayer: nextLayer,
             layer1Verified: data.session.layer1,
             layer2Verified: data.session.layer2,
             layer3Verified: data.session.layer3,

@@ -1,8 +1,8 @@
 // OpenRouter AI Integration
 
-import { config } from './config';
-import { log } from './logger';
-import { GenerationError } from './error-handler';
+import { config } from '../config';
+import { log } from '../logger';
+import { GenerationError } from '../error-handler';
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 

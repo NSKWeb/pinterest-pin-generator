@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/Header';
 import { SEOMetadataForm } from '@/components/seo/SEOMetadataForm';
 import { SEOPreview } from '@/components/seo/SEOPreview';
-import { Search, Globe, Hash, ExternalLink } from 'lucicon';
+import { Search, Globe, Hash, ExternalLink } from 'lucide-react';
 
 interface GeneratedSEO {
   id: string;

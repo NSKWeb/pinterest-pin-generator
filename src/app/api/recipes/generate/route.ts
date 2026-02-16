@@ -1,13 +1,14 @@
 // Recipe Generation API Route
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createChatCompletion } from '@/lib/ai/openrouter';
 import { buildRecipePrompt } from '@/lib/ai/prompts/recipe-generator';
 import { createJsonResponse, withCORS } from '@/lib/api-middleware';
 import { log } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
-  if (const corsResponse = withCORS(request)) {
+  const corsResponse = withCORS(request);
+  if (corsResponse) {
     return corsResponse;
   }
 

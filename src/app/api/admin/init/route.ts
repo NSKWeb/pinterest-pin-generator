@@ -1,12 +1,13 @@
 // Initialize Admin API Route
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashString } from '@/lib/auth/three-layer';
 import { createJsonResponse, withCORS } from '@/lib/api-middleware';
 
 export async function POST(request: NextRequest) {
-  if (const corsResponse = withCORS(request)) {
+  const corsResponse = withCORS(request);
+  if (corsResponse) {
     return corsResponse;
   }
 

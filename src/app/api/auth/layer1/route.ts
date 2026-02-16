@@ -1,13 +1,12 @@
 // Three-Layer Authentication API Routes
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyHash, generateSessionToken, getSessionExpiry } from '@/lib/auth/three-layer';
+import { verifyHash, generateSessionToken, getSessionExpiry, generateToken } from '@/lib/auth/three-layer';
 import { createJsonResponse, withCORS, addCORSHeaders } from '@/lib/api-middleware';
 import { log } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/auth/three-layer';
 
-const SESSION_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Layer 1: Security Question Verification
 export async function POST(request: NextRequest) {
@@ -83,6 +82,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const jwtToken = generateToken({
+      sub: admin.id,
+      sessionId: sessionToken,
+      layers: {
+        layer1: true,
+        layer2: false,
+        layer3: false,
+      },
+    });
+
     log.auth.success('Layer 1', { adminId: admin.id, ip });
 
     return addCORSHeaders(createJsonResponse({
@@ -90,6 +99,7 @@ export async function POST(request: NextRequest) {
       message: 'Security question verified',
       requiresNextLayer: true,
       layer: 'layer1',
+      token: jwtToken,
     }));
 
   } catch (error) {

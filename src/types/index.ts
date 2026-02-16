@@ -1,108 +1,123 @@
-import type { PlanType } from "@/lib/config";
+// General Types
 
-export type UsageState = {
-  plan: PlanType | null;
-  ideasUsed: number;
-  promptsUsed: number;
-  imagesUsed: number;
-  limit: number | null;
-  lastReset: string | null;
-};
-
-export type PlanOption = {
-  id: PlanType;
-  name: string;
-  description: string;
-  limit: number | null;
-  ads: string;
-  highlights: string[];
-};
-
-export type PinIdea = {
+// Navigation
+export interface NavItem {
   id: string;
-  title: string;
-  description: string;
-  keywords: string[];
-};
-
-export type ImagePrompt = {
-  id: string;
-  main_prompt: string;
-  style_guide: string;
-  negative_prompt: string;
-};
-
-export type IdeaResponse = {
-  success: boolean;
-  ideas: PinIdea[];
-  count: number;
-  generatedAt: string;
-};
-
-export type PromptResponse = {
-  success: boolean;
-  ideaId: string;
-  prompts: ImagePrompt[];
-  variationCount: number;
-};
-
-export type GeneratedImage = {
-  id: string;
-  url: string;
-  width: number;
-  height: number;
-  aspectRatio: string;
-  generatedAt: string;
-  seed: number;
-  generationTime: number;
-  model: string;
-};
-
-export type ImageGenerationResponse = {
-  success: boolean;
-  generatedAt: string;
-  promptId: string;
-  images: GeneratedImage[];
-  totalGenerationTime: number;
-  variationCount: number;
-};
-
-export interface StoredImage {
-  id: string;
-  ideaId: string;
-  promptId: string;
-  imageUrl: string;
-  generatedAt: string;
-  prompt: string;
-  generationTime: number;
-  pinTitle: string;
-  aspectRatio: string;
+  label: string;
+  icon: string;
+  path: string;
+  badge?: string | number;
 }
 
-// Re-export ad types
-export type {
-  AdNetwork,
-  AdType,
-  AdFrequency,
-  AdEventType,
-  AdPlacement,
-  AdEvent,
-  AdStats,
-  AdSettings,
-  AdConfig,
-  AdUnlockState,
-} from "./ads";
+// Dashboard
+export interface DashboardStats {
+  totalRecipes: number;
+  totalBlogs: number;
+  totalPins: number;
+  totalCampaigns: number;
+  activeCampaigns: number;
+  todayGenerated: number;
+  apiUsageThisMonth: number;
+  storageUsed: number;
+}
 
-// Re-export usage types
-export type {
-  DailyUsage,
-  LifetimeStats,
-  UsageStats,
-  GenerationType,
-  LimitCheckResult,
-  PlanLimits,
-  TimeRemaining,
-  UsageEvent,
-  LimitReachedEvent,
-  AnalyticsData,
-} from "./usage";
+export interface RecentActivity {
+  id: string;
+  type: 'generation' | 'campaign' | 'bulk_job';
+  action: string;
+  target: string;
+  timestamp: Date;
+  status: 'success' | 'failed' | 'pending';
+}
+
+// API
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Assets
+export interface Asset {
+  id: string;
+  name: string;
+  type: 'image' | 'video' | 'document' | 'data';
+  size: number;
+  url: string;
+  thumbnailUrl?: string;
+  createdAt: Date;
+  tags?: string[];
+  metadata?: Record<string, any>;
+}
+
+// UI
+export interface ToastMessage {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+// Export
+export interface ExportOptions {
+  format: 'json' | 'csv' | 'zip';
+  contentTypes?: ContentType[];
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  includeAssets?: boolean;
+  includeMetadata?: boolean;
+}
+
+export interface ExportProgress {
+  status: 'preparing' | 'compressing' | 'finalizing' | 'complete' | 'error';
+  progress: number; // 0-100
+  message?: string;
+}
+
+// Settings
+export interface AppSettings {
+  openrouter: {
+    fastModel: string;
+    qualityModel: string;
+    blogModel: string;
+    codeModel: string;
+  };
+  security: {
+    sessionTimeout: number;
+    requireAllLayers: boolean;
+    auditLogging: boolean;
+  };
+  features: {
+    enableCampaigns: boolean;
+    enableBulkProcessing: boolean;
+    enablePinStudio: boolean;
+    enableAssetLibrary: boolean;
+  };
+  automation: {
+    queueConcurrency: number;
+    campaignRetryAttempts: number;
+    campaignRetryDelay: number;
+  };
+}
+
+import type { ContentType } from './campaign';

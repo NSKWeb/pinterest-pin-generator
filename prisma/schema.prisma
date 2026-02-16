@@ -1,0 +1,176 @@
+// Prisma Schema for AI SaaS Dashboard
+// This schema defines all database models for the admin dashboard
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Using SQLite for simplicity - can switch to PostgreSQL for production
+  url      = env("DATABASE_URL")
+}
+
+// Single Admin model for 3-layer authentication
+model Admin {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String   // Layer 2: bcrypt hashed admin password
+  securityQuestion  String   // Layer 1: security question
+  securityAnswerHash String  // Layer 1: bcrypt hashed answer
+  secretKeyHash     String   // Layer 3: bcrypt hashed secret key
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastLoginAt       DateTime?
+  failedAttempts    Int      @default(0)
+  lockedUntil       DateTime?
+  
+  sessions          AdminSession[]
+  auditLogs         AuditLog[]
+  apiUsages         ApiUsage[]
+}
+
+model AdminSession {
+  id            String   @id @default(uuid())
+  adminId       String
+  admin         Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  token         String   @unique
+  ipAddress     String?
+  userAgent     String?
+  layer1Verified Boolean @default(false)  // Security question passed
+  layer2Verified Boolean @default(false)  // Password passed
+  layer3Verified Boolean @default(false)  // Secret key passed
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+}
+
+// Audit logging for admin actions
+model AuditLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  admin       Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action      String   // e.g., "generate_recipe", "create_campaign"
+  resource    String?  // e.g., "recipe_123", "campaign_456"
+  details     String?  // JSON string with additional details
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}
+
+// Campaign model for content automation
+model Campaign {
+  id                String   @id @default(uuid())
+  name              String
+  description       String?
+  status            String   @default("draft") // "draft" | "active" | "paused" | "completed"
+  contentTypes      String   // JSON array: ["recipe", "blog", "pin"]
+  topics            String   // JSON array of topics/keywords
+  schedule          String?  // Cron expression for recurring
+  isRecurring       Boolean  @default(false)
+  autoPublish       Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastRunAt         DateTime?
+  nextRunAt         DateTime?
+  totalRuns         Int      @default(0)
+  successfulRuns    Int      @default(0)
+  failedRuns        Int      @default(0)
+  
+  runs              CampaignRun[]
+  generatedContents GeneratedContent[]
+}
+
+model CampaignRun {
+  id          String   @id @default(uuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  status      String   @default("pending") // "pending" | "running" | "completed" | "failed"
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?
+  itemsProcessed Int    @default(0)
+  itemsTotal  Int      @default(0)
+  createdAt   DateTime @default(now())
+  
+  results     GeneratedContent[]
+}
+
+// Generated content types
+model GeneratedContent {
+  id            String   @id @default(uuid())
+  type          String   // "recipe" | "blog" | "pin" | "seo"
+  title         String
+  content       String   // JSON string with full content
+  metadata      String?  // JSON: SEO tags, keywords, etc.
+  campaignId    String?
+  campaign      Campaign?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  campaignRunId String?
+  campaignRun   CampaignRun? @relation(fields: [campaignRunId], references: [id], onDelete: SetNull)
+  status        String   @default("draft") // "draft" | "published" | "archived"
+  tags          String?  // JSON array of tags
+  source        String?  // Source URL or reference
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  assets        PinAsset[]
+}
+
+// Pin assets for the pin studio
+model PinAsset {
+  id            String   @id @default(uuid())
+  generatedContentId String?
+  generatedContent GeneratedContent? @relation(fields: [generatedContentId], references: [id], onDelete: SetNull)
+  title         String
+  description   String?
+  imageUrl      String
+  thumbnailUrl  String?
+  width         Int      @default(1000)
+  height        Int      @default(1500)
+  format        String   @default("png")
+  tags          String?  // JSON array
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Bulk processing jobs
+model BulkJob {
+  id            String   @id @default(uuid())
+  type          String   // "recipe-batch" | "blog-batch" | "pin-batch" | "seo-batch"
+  status        String   @default("queued") // "queued" | "processing" | "completed" | "failed" | "cancelled"
+  totalItems    Int      @default(0)
+  processedItems Int     @default(0)
+  failedItems   Int      @default(0)
+  inputData     String   // JSON array of input items
+  results       String?  // JSON array of results
+  error         String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// API usage tracking per model
+model ApiUsage {
+  id          String   @id @default(uuid())
+  adminId     String
+  admin       Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  model       String   // e.g., "gpt-4o", "claude-3.5-sonnet"
+  provider    String   // "openrouter", "replicate", "internal"
+  promptTokens Int     @default(0)
+  completionTokens Int  @default(0)
+  totalTokens Int       @default(0)
+  cost        Float    @default(0)
+  requests    Int      @default(1)
+  createdAt   DateTime @default(now())
+  
+  @@index([adminId, createdAt])
+  @@index([model, createdAt])
+}
+
+// Settings stored in database
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  type      String   @default("string") // string, number, boolean, json
+  updatedAt DateTime @updatedAt
+}

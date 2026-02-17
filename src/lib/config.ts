@@ -23,6 +23,14 @@ const envSchema = z.object({
   OPENROUTER_BLOG_MODEL: z.string().default('anthropic/claude-3-5-sonnet-20241022'),
   OPENROUTER_CODE_MODEL: z.string().default('deepseek/deepseek-coder'),
   
+  // Groq
+  GROQ_API_KEY: z.string().min(1, 'Groq API key is required'),
+  
+  // AI Provider Settings
+  DEFAULT_AI_PROVIDER: z.enum(['openrouter', 'groq', 'auto']).default('auto'),
+  ENABLE_AI_FALLBACK: z.string().transform(val => val === 'true').default(true),
+  ENABLE_PROVIDER_SELECTION: z.string().transform(val => val === 'true').default(true),
+  
   // Image APIs
   REPLICATE_API_TOKEN: z.string().optional(),
   REPLICATE_API_KEY: z.string().optional(),
@@ -71,6 +79,10 @@ export const config = envSchema.parse({
   OPENROUTER_QUALITY_MODEL: process.env.OPENROUTER_QUALITY_MODEL,
   OPENROUTER_BLOG_MODEL: process.env.OPENROUTER_BLOG_MODEL,
   OPENROUTER_CODE_MODEL: process.env.OPENROUTER_CODE_MODEL,
+  GROQ_API_KEY: process.env.GROQ_API_KEY,
+  DEFAULT_AI_PROVIDER: process.env.DEFAULT_AI_PROVIDER,
+  ENABLE_AI_FALLBACK: process.env.ENABLE_AI_FALLBACK,
+  ENABLE_PROVIDER_SELECTION: process.env.ENABLE_PROVIDER_SELECTION,
   REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
   REPLICATE_API_KEY: process.env.REPLICATE_API_KEY,
   STABILITY_API_KEY: process.env.STABILITY_API_KEY,
@@ -142,6 +154,12 @@ export const NAV_ITEMS = [
     icon: 'Zap',
     path: '/dashboard/campaigns',
     badge: 'Pro',
+  },
+  {
+    id: 'ai-settings',
+    label: 'AI Settings',
+    icon: 'Brain',
+    path: '/dashboard/ai-settings',
   },
   {
     id: 'assets',

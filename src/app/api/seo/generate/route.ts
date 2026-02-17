@@ -1,8 +1,7 @@
 // SEO Generation API Route
 
 import { NextRequest } from 'next/server';
-import { createChatCompletion } from '@/lib/ai/openrouter';
-import { buildSEOPrompt } from '@/lib/ai/prompts/seo-metadata';
+import { withAdminAuth } from '@/lib/api-middleware';
 import { createJsonResponse, withCORS } from '@/lib/api-middleware';
 import { log } from '@/lib/logger';
 
@@ -13,8 +12,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const auth = withAdminAuth(request);
+    if (auth.error) {
+      return createJsonResponse({ success: false, error: auth.error.message }, 401);
+    }
+
     const body = await request.json();
-    const { title, content, keywords, type } = body;
+    const { title, content, keywords, type, provider } = body;
 
     if (!title) {
       return createJsonResponse(
@@ -22,6 +26,8 @@ export async function POST(request: NextRequest) {
         400
       );
     }
+
+    const adminId = auth.context.userId!
 
     // For demo, return mock data
     const keywordList = keywords ? keywords.split(',').map(k => k.trim()) : [];
@@ -66,6 +72,8 @@ export async function POST(request: NextRequest) {
     return createJsonResponse({
       success: true,
       data: mockSEO,
+      provider: provider || 'auto',
+      model: 'mock-model',
     });
 
   } catch (error) {

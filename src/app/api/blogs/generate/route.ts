@@ -1,10 +1,10 @@
 // Blog Generation API Route
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createChatCompletion } from '@/lib/ai/openrouter';
-import { buildBlogPrompt } from '@/lib/ai/prompts/blog-generator';
+import { NextRequest } from 'next/server';
+import { withAdminAuth } from '@/lib/api-middleware';
 import { createJsonResponse, withCORS } from '@/lib/api-middleware';
 import { log } from '@/lib/logger';
+import { fallbackHandler } from '@/lib/ai/fallback-handler';
 
 export async function POST(request: NextRequest) {
   const corsResponse = withCORS(request);
@@ -13,8 +13,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const auth = withAdminAuth(request);
+    if (auth.error) {
+      return createJsonResponse({ success: false, error: auth.error.message }, 401);
+    }
+
     const body = await request.json();
-    const { topic, keywords, tone, structure, length, targetWordCount } = body;
+    const { topic, keywords, tone, structure, length, targetWordCount, provider } = body;
 
     if (!topic) {
       return createJsonResponse(
@@ -22,6 +27,8 @@ export async function POST(request: NextRequest) {
         400
       );
     }
+
+    const adminId = auth.context.userId!
 
     // For demo, return mock data
     const keywordList = keywords ? keywords.split(',').map(k => k.trim()) : [];
@@ -118,6 +125,8 @@ Remember: the key to success is consistent effort and a willingness to learn fro
     return createJsonResponse({
       success: true,
       data: mockBlog,
+      provider: provider || 'auto',
+      model: 'mock-model',
     });
 
   } catch (error) {

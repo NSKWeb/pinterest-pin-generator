@@ -3,8 +3,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { config } from './config';
-import { log } from './logger';
+import { config } from '../config';
+import { log } from '../logger';
 import type { JWTPayload, AdminSession, AuthLayer } from '@/types/auth';
 
 // Timing-safe string comparison

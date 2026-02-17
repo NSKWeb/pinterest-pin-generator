@@ -101,6 +101,8 @@ model GeneratedContent {
   title         String
   content       String   // JSON string with full content
   metadata      String?  // JSON: SEO tags, keywords, etc.
+  providerUsed  String?  // "openrouter" | "groq" | null
+  modelUsed     String?  // The model that generated this content
   campaignId    String?
   campaign      Campaign?   @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   campaignRunId String?
@@ -173,4 +175,41 @@ model Setting {
   value     String
   type      String   @default("string") // string, number, boolean, json
   updatedAt DateTime @updatedAt
+}
+
+// AI Provider Settings
+model AIProviderSettings {
+  id                String   @id @default(uuid())
+  adminId           String   @unique
+  defaultProvider   String   @default("auto") // "openrouter" | "groq" | "auto"
+  fallbackEnabled   Boolean  @default(true)
+  taskMappings      String   @default("{}") // JSON object with task-specific mappings
+  monthlyBudgetOpenRouter Float? // Monthly budget for OpenRouter
+  monthlyBudgetGroq       Float? // Monthly budget for Groq
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([adminId])
+}
+
+// Provider Usage (enhanced from existing ApiUsage)
+model ProviderUsage {
+  id              String   @id @default(uuid())
+  adminId         String
+  provider        String   // "openrouter" | "groq"
+  model           String
+  promptTokens    Int      @default(0)
+  completionTokens Int     @default(0)
+  totalTokens     Int      @default(0)
+  cost            Float    @default(0)
+  requests        Int      @default(1)
+  taskType        String?  // "recipe" | "blog" | "pin" | "seo" | "bulk"
+  responseTimeMs  Int?     // Response time in milliseconds
+  success         Boolean  @default(true)
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  
+  @@index([adminId, createdAt])
+  @@index([provider, createdAt])
+  @@index([taskType, createdAt])
 }
